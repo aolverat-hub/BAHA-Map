@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<!-- Data was obtained from the following sources:
+ Berkeley City Land Boundary - https://data.cityofberkeley.info/City-Government/Land_Boundary/e3zv-nuhf/about_data
+ Attribute table and points GeoJSON *see note->* - https://geojson.io/#map=12.46/37.8734/-122.281 (This one I'm not sure if it keeps the features and such but it's in my data folder anyway so you can just find it there)
+ Campanille Image - https://en.advisor.travel/poi/Sather-Tower-15058 -->
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,28 +22,66 @@
       font-family: Georgia, Times, 'Times New Roman', serif;
     }
 
-    /* Map takes most of the space */
     #map {
       flex-grow: 1;
     }
 
-    /* Sidebar on the right */
     #sidebar {
       width: 300px;
-      background: #f9f9f9;
-      border-left: 2px solid #000;
+      background: url('https://img1.advisor.travel/fs1600x1200px-Sather_Tower_11.jpg') no-repeat center center;
+      background-size: cover;
+      border-left: 3px solid #00008B;
       padding: 20px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
+      justify-content: space-between; /* push author down */
+      position: relative;
+      color: white;
+    }
+
+    /* Overlay for readability */
+    #sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 0;
+    }
+
+    #sidebar * {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    #sidebar-content {
+      display: flex;
+      flex-direction: column;
       justify-content: center;
-      align-items: center;
+      flex-grow: 1;
     }
 
     h1 {
       margin-top: 0;
       font-size: 1.5em;
-      text-align: center;
+    }
+
+    a {
+      color: #FDB515;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Author at bottom */
+    .author {
+      font-size: 0.9em;
     }
   </style>
 </head>
@@ -49,8 +90,18 @@
   <div id="map"></div>
 
   <div id="sidebar">
-    <h1>Heritage Map of Berkeley</h1>
-    <p>Explore historic landmarks and architectural sites across Berkeley.</p>
+    <div id="sidebar-content">
+      <h1>Heritage Map of Berkeley</h1>
+      <p>
+        The data for this map was obtained from the
+        <a href="https://berkeleyheritage.com/berkeley_landmarks/all_landmarks.html" target="_blank">
+          Berkeley Architectural Heritage Association
+        </a>, also known as BAHA, which is a compiled list of all the historical landmarks in the city of Berkeley.
+      </p>
+      <p>Click each point to explore only a few of the many (MANY) historic landmarks and architectural sites that the
+        city of Berkeley has to offer.</p>
+    </div>
+    <p class="author">By Ariana Olvera Torres - Nov. 2025</p>
   </div>
 
   <script>
@@ -60,58 +111,96 @@
       container: 'map',
       style: 'mapbox://styles/aolverat/cmh9cjrvl009i01ra1e8yawx9',
       center: [-122.27, 37.87],
-      zoom: 9
+      zoom: 12
     });
 
-    map.on('load', () => {
-      // Add your GeoJSON data source
-      map.addSource('newpoints', {
+    map.on('style.load', () => {
+      // Heritage points
+      map.addSource('heritage-points', {
         type: 'geojson',
         data: 'https://raw.githubusercontent.com/aolverat-hub/BAHA-Map/main/data/New.map.geojson?nocache=' + Date.now()
       });
 
-      // Add a layer for the points
       map.addLayer({
         id: 'newpoints-layer',
         type: 'circle',
-        source: 'newpoints',
+        source: 'heritage-points',
         paint: {
-          'circle-color': '#4264FB',
           'circle-radius': 6,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff'
+          'circle-color': '#FDB515',
+          'circle-stroke-width': 1.2,
+          'circle-stroke-color': '#fff'
         }
-      }, 'waterway-label'); // keep above base map features
-
-      // Add popup when clicking a point
-      map.on('click', 'newpoints-layer', (e) => {
-        const coordinates = e.features[0].geometry.coordinates.slice();
-        const properties = e.features[0].properties;
-
-        const popupContent = `
-          <div>
-            <h3>${properties.Landmark}</h3>
-            <p><strong>Address:</strong> ${properties.Address}</p>
-            <p><strong>Architect and Date:</strong> ${properties.ArchitectDate}</p>
-            <p><strong>Designated:</strong> ${properties.Designated}</p>
-            ${properties.Link ? `<p><a href="${properties.Link}" target="_blank">More Information</a></p>` : ''}
-            ${properties.Notes ? `<p><strong>Notes:</strong> ${properties.Notes}</p>` : ''}
-          </div>
-        `;
-
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(popupContent)
-          .addTo(map);
       });
 
-      // Change cursor when hovering over points
+      map.on('click', 'newpoints-layer', (e) => {
+        const coords = [e.lngLat.lng, e.lngLat.lat];
+        const props = e.features[0].properties;
+
+        map.flyTo({
+          center: coords,
+          zoom: 14,
+          speed: 0.8,
+          curve: 1.5,
+          essential: true
+        });
+
+        map.once('moveend', () => {
+          const popupContent = `
+            <div>
+              <h3>${props.Landmark}</h3>
+              <p><strong>Address:</strong> ${props.Address}</p>
+              <p><strong>Architect and Date:</strong> ${props.ArchitectDate}</p>
+              <p><strong>Designated:</strong> ${props.Designated}</p>
+              ${props.Link ? `<p><a href="${props.Link}" target="_blank">More Information</a></p>` : ''}
+              ${props.Notes ? `<p><strong>Notes:</strong> ${props.Notes}</p>` : ''}
+            </div>
+          `;
+          new mapboxgl.Popup()
+            .setLngLat(coords)
+            .setHTML(popupContent)
+            .addTo(map);
+        });
+      });
+
       map.on('mouseenter', 'newpoints-layer', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
+
       map.on('mouseleave', 'newpoints-layer', () => {
         map.getCanvas().style.cursor = '';
       });
+
+      // Berkeley boundary
+      map.addSource('berkeley-boundary', {
+        type: 'geojson',
+        data: 'https://raw.githubusercontent.com/aolverat-hub/BAHA-Map/refs/heads/main/data/Berkeley_Land_Boundary.geojson'
+      });
+
+      // Fill layer
+      map.addLayer({
+        id: 'berkeley-boundary-fill',
+        type: 'fill',
+        source: 'berkeley-boundary',
+        layout: {},
+        paint: {
+          'fill-color': '#00008B',
+          'fill-opacity': 0.1
+        }
+      });
+
+      // Outline layer
+      map.addLayer({
+        id: 'berkeley-boundary-line',
+        type: 'line',
+        source: 'berkeley-boundary',
+        layout: {},
+        paint: {
+          'line-color': '#00008B',
+          'line-width': 3
+        }
+      });
+
     });
   </script>
 </body>
