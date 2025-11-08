@@ -2,14 +2,16 @@
 <html lang="en">
 <!-- Data was obtained from the following sources:
  Berkeley City Land Boundary - https://data.cityofberkeley.info/City-Government/Land_Boundary/e3zv-nuhf/about_data
- Attribute table and points GeoJSON *see note->* - https://geojson.io/#map=12.46/37.8734/-122.281 (This one I'm not sure if it keeps the features and such but it's in my data folder anyway so you can just find it there)
+ Attribute table and points GeoJSON *see note->* - https://geojson.io/#map=12.46/37.8734/-122.281 (This one I'm not sure if it keeps the features and such but it's in my data folder anyway so you can just find it there. Sorry if it just takes you to the empty geojson.io website)
  Campanille Image - https://en.advisor.travel/poi/Sather-Tower-15058 -->
+
+ <!-- Also if the little arrow on the edge of the popup isn't on the dot, pay attention to the circle. That one is showing the correct locaiton for the landmark.-->
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Heritage Map of Berkeley</title>
 
-  <!-- Mapbox -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
 
@@ -35,12 +37,11 @@
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: space-between; /* push author down */
+      justify-content: space-between;
       position: relative;
       color: white;
     }
 
-    /* Overlay for readability */
     #sidebar::before {
       content: '';
       position: absolute;
@@ -79,7 +80,6 @@
       text-decoration: underline;
     }
 
-    /* Author at bottom */
     .author {
       font-size: 0.9em;
     }
@@ -100,6 +100,7 @@
       </p>
       <p>Click each point to explore only a few of the many (MANY) historic landmarks and architectural sites that the
         city of Berkeley has to offer.</p>
+      <p>If you'd like to see more historical landmarks, click the link above for the list!</p>
     </div>
     <p class="author">By Ariana Olvera Torres - Nov. 2025</p>
   </div>
@@ -115,7 +116,6 @@
     });
 
     map.on('style.load', () => {
-      // Heritage points
       map.addSource('heritage-points', {
         type: 'geojson',
         data: 'https://raw.githubusercontent.com/aolverat-hub/BAHA-Map/main/data/New.map.geojson?nocache=' + Date.now()
@@ -126,9 +126,9 @@
         type: 'circle',
         source: 'heritage-points',
         paint: {
-          'circle-radius': 6,
+          'circle-radius': 6.5,
           'circle-color': '#FDB515',
-          'circle-stroke-width': 1.2,
+          'circle-stroke-width': 1.3,
           'circle-stroke-color': '#fff'
         }
       });
@@ -171,13 +171,11 @@
         map.getCanvas().style.cursor = '';
       });
 
-      // Berkeley boundary
       map.addSource('berkeley-boundary', {
         type: 'geojson',
         data: 'https://raw.githubusercontent.com/aolverat-hub/BAHA-Map/refs/heads/main/data/Berkeley_Land_Boundary.geojson'
       });
 
-      // Fill layer
       map.addLayer({
         id: 'berkeley-boundary-fill',
         type: 'fill',
@@ -185,11 +183,10 @@
         layout: {},
         paint: {
           'fill-color': '#00008B',
-          'fill-opacity': 0.1
+          'fill-opacity': 0.07
         }
       });
 
-      // Outline layer
       map.addLayer({
         id: 'berkeley-boundary-line',
         type: 'line',
